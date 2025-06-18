@@ -1,0 +1,22 @@
+// app.js
+const express = require('express');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+
+const app = express();
+
+app.use(cors({
+    origin: 'http://localhost:5173', // Your frontend URL
+    credentials: true
+}));
+app.use(express.json());
+app.use(cookieParser());
+
+app.get('/', (req, res) => {
+    res.send('CORS-enabled Express server is running!');
+});
+
+const userRoutes = require('./routes/userRoutes');
+app.use('/api/users', userRoutes);
+
+module.exports = app;
