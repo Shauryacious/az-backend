@@ -5,8 +5,7 @@ const productSchema = new mongoose.Schema({
     seller: { type: mongoose.Schema.Types.ObjectId, ref: 'Seller', required: true },
     title: { type: String, required: true },
     description: { type: String, required: true },
-    images: [{ type: String }], // Images are now optional
-    // Optional fields for future expansion:
+    images: [{ type: String }],
     brand: { type: String },
     price: { type: Number },
     quantity: { type: Number }
