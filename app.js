@@ -2,28 +2,30 @@
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const compression = require('compression');
+require('dotenv').config();
 
+const corsOptions = require('./config/corsOptions');
+const { multerErrorHandler, globalErrorHandler } = require('./middleware/errorHandlers');
+const apiRoutes = require('./routes');
 
 const app = express();
 
-app.use(cors({
-    origin: 'http://localhost:5173', // Your frontend URL
-    credentials: true
-}));
+app.use(compression());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
+// Health check route
 app.get('/', (req, res) => {
     res.send('CORS-enabled Express server is running!');
 });
 
-const userRoutes = require('./routes/userRoutes');
-const sellerRoutes = require('./routes/sellerRoutes');
-const productRoutes = require('./routes/productRoutes');
+// Mount all API routes under /api
+app.use('/api', apiRoutes);
 
-
-app.use('/api/users', userRoutes);
-app.use('/api/sellers', sellerRoutes);
-app.use('/api/products', productRoutes);
+// Error handlers
+app.use(multerErrorHandler);
+app.use(globalErrorHandler);
 
 module.exports = app;
