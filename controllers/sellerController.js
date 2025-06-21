@@ -4,7 +4,6 @@ const Seller = require('../models/Seller');
 const createSeller = async (req, res) => {
     try {
         const { businessName, contactEmail } = req.body;
-        // req.user is set by auth middleware (user must be logged in)
         const userId = req.user.userId;
 
         // Check if seller profile already exists for this user

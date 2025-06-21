@@ -1,4 +1,4 @@
-// src/controllers/productController.js
+// controllers/productController.js
 const Product = require('../models/Product');
 const Seller = require('../models/Seller');
 const cloudinary = require('../utils/cloudinary');
@@ -17,7 +17,18 @@ const uploadBufferToCloudinary = (buffer, folder) => {
     });
 };
 
-// POST /api/products/create
+// PUBLIC: GET /api/products
+const getAllProducts = async (req, res) => {
+    try {
+        // Add pagination/filtering as needed for production
+        const products = await Product.find().select('-__v').limit(100).lean();
+        res.json({ products });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// POST /api/products/create (protected)
 const createProduct = async (req, res) => {
     try {
         const userId = req.user.userId;
@@ -27,8 +38,6 @@ const createProduct = async (req, res) => {
         }
 
         const { name, sku, description, price, available } = req.body;
-
-        // Validate required fields
         if (!name || !sku || !description || !price || available === undefined) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
@@ -57,7 +66,7 @@ const createProduct = async (req, res) => {
     }
 };
 
-// GET /api/products/mine
+// GET /api/products/mine (protected)
 const getMyProducts = async (req, res) => {
     try {
         const userId = req.user.userId;
@@ -73,4 +82,4 @@ const getMyProducts = async (req, res) => {
     }
 };
 
-module.exports = { createProduct, getMyProducts };
+module.exports = { getAllProducts, createProduct, getMyProducts };
