@@ -5,26 +5,27 @@ const cookieParser = require('cookie-parser');
 const compression = require('compression');
 require('dotenv').config();
 
-const corsOptions = require('./config/corsOptions');
+const { corsOptions } = require('./config'); // Centralized config
 const { multerErrorHandler, globalErrorHandler } = require('./middleware/errorHandlers');
 const apiRoutes = require('./routes');
 
 const app = express();
 
+// Global middlewares
 app.use(compression());
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 app.use(cookieParser());
 
-// Health check route
-app.get('/', (req, res) => {
-    res.send('CORS-enabled Express server is running!');
+// Health check endpoint (standardized)
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', message: 'Server healthy' });
 });
 
 // Mount all API routes under /api
 app.use('/api', apiRoutes);
 
-// Error handlers
+// Error handlers (should be last)
 app.use(multerErrorHandler);
 app.use(globalErrorHandler);
 

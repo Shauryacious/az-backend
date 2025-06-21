@@ -6,6 +6,7 @@ const productRoutes = require('./productRoutes');
 
 const router = express.Router();
 
+// All API routes are mounted under /api in app.js
 router.use('/users', userRoutes);
 router.use('/sellers', sellerRoutes);
 router.use('/products', productRoutes);
