@@ -1,10 +1,18 @@
+// controllers/sellerController.js
 const Seller = require('../models/Seller');
 
-// Create Seller Profile
-const createSeller = async (req, res) => {
+/**
+ * Create a Seller Profile for the logged-in user.
+ * Only allows creation if a profile does not already exist.
+ */
+exports.createSeller = async (req, res, next) => {
     try {
         const { businessName, contactEmail } = req.body;
         const userId = req.user.userId;
+
+        if (!businessName || !contactEmail) {
+            return res.status(400).json({ error: 'Business name and contact email are required' });
+        }
 
         // Check if seller profile already exists for this user
         const existingSeller = await Seller.findOne({ user: userId });
@@ -12,21 +20,25 @@ const createSeller = async (req, res) => {
             return res.status(409).json({ error: 'Seller profile already exists' });
         }
 
-        const seller = new Seller({
+        const seller = await Seller.create({
             user: userId,
             businessName,
-            contactEmail
+            contactEmail,
         });
 
-        await seller.save();
-        res.status(201).json({ message: 'Seller profile created', seller });
+        res.status(201).json({
+            message: 'Seller profile created',
+            seller,
+        });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
-// Get Seller Profile (for logged-in user)
-const getSellerProfile = async (req, res) => {
+/**
+ * Get the Seller Profile for the logged-in user.
+ */
+exports.getSellerProfile = async (req, res, next) => {
     try {
         const userId = req.user.userId;
         const seller = await Seller.findOne({ user: userId });
@@ -35,8 +47,18 @@ const getSellerProfile = async (req, res) => {
         }
         res.json({ seller });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        next(err);
     }
 };
 
-module.exports = { createSeller, getSellerProfile };
+/**
+ * (Optional) Get all sellers (admin only)
+ */
+exports.getAllSellers = async (req, res, next) => {
+    try {
+        const sellers = await Seller.find().populate('user', 'email role');
+        res.json({ sellers });
+    } catch (err) {
+        next(err);
+    }
+};
