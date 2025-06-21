@@ -2,6 +2,7 @@
 const Product = require('../models/Product');
 const Seller = require('../models/Seller');
 const { uploadBuffer } = require('../utils/cloudinary');
+const productAnalysisQueue = require('../queues/productAnalysisQueue');
 
 /**
  * PUBLIC: Get all products with optional pagination.
@@ -89,6 +90,13 @@ const createProduct = async (req, res, next) => {
 
         await product.save();
 
+        // Add product analysis job to the queue (automated AI analysis)
+        await productAnalysisQueue.add('analyze', {
+            productId: product._id.toString(),
+            description: product.description,
+            imagePath: product.images && product.images.length > 0 ? product.images[0] : null,
+        });
+
         res.status(201).json({ message: 'Product listed successfully', product });
     } catch (err) {
         next(err);
@@ -115,9 +123,64 @@ const getMyProducts = async (req, res, next) => {
     }
 };
 
+// Optionally keep this for admin/debug only (not exported, not routed)
+const analyzeProductImage = async (req, res, next) => {
+    try {
+        const { description } = req.body;
+        const imagePath = req.file.path; // multer handles file upload
+        const productId = req.params.id;
+        const { matchImageWithDescription } = require('../utils/blipApi');
+
+        // Call Python BLIP microservice
+        const result = await matchImageWithDescription(imagePath, description);
+
+        // Update product in DB
+        const product = await Product.findById(productId);
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+
+        // Update signalBreakdown and flags
+        product.signalBreakdown = product.signalBreakdown || {};
+        product.signalBreakdown.descMatch = result.score;
+
+        product.flags = product.flags || [];
+        if (result.label === 'Fake') {
+            if (!product.flags.includes('desc_image_mismatch')) {
+                product.flags.push('desc_image_mismatch');
+            }
+        } else {
+            product.flags = product.flags.filter(f => f !== 'desc_image_mismatch');
+        }
+
+        // Update trustScore, riskLevel, status using model methods (if implemented)
+        if (typeof product.computeRiskLevel === 'function') {
+            product.trustScore = result.score;
+            product.riskLevel = product.computeRiskLevel();
+            product.status = product.computeStatus();
+        }
+
+        // Log status history
+        product.statusHistory = product.statusHistory || [];
+        product.statusHistory.push({
+            status: product.status,
+            changedAt: new Date(),
+            reason: 'Image-description AI analysis',
+            flags: product.flags,
+        });
+
+        await product.save();
+
+        res.json({ success: true, label: result.label, score: result.score });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     getAllProducts,
     getProductById,
     createProduct,
     getMyProducts,
+    // analyzeProductImage, // <-- NOT EXPORTED (admin/debug only)
 };
