@@ -1,7 +1,50 @@
 # Node.js dependencies
 node_modules/
 
+# Python virtual environment
+ml_service/venv/
+ml_service/__pycache__/
+ml_service/*.pyc
+
 # dotenv environment variables file
 .env
+.env.*
 
-.gitignore
+# Python cache and logs
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# Uploads and temp files
+uploads/
+tmp/
+*.tmp
+
+# macOS system files
+.DS_Store
+
+# VS Code settings (optional)
+.vscode/
+
+# Jupyter notebooks checkpoints (if you use notebooks)
+.ipynb_checkpoints/
+
+# Ignore model weights (if you ever save them)
+ml_service/*.pt
+ml_service/*.pth
+
+# Ignore FastAPI auto-generated OpenAPI docs (if any)
+ml_service/openapi.json
+
+# Ignore coverage reports
+coverage/
+*.cover
+*.coverage
+*.cov
+coverage.xml
+*.lcov
+
+# Ignore test output
+test-output/
