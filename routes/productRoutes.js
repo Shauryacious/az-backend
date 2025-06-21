@@ -1,7 +1,12 @@
 // routes/productRoutes.js
 const express = require('express');
 const router = express.Router();
-const { getAllProducts, createProduct, getMyProducts } = require('../controllers/productController');
+const {
+    getAllProducts,
+    createProduct,
+    getMyProducts,
+    getProductById // <-- Import the new controller
+} = require('../controllers/productController');
 const authRequired = require('../middleware/auth');
 const rbac = require('../middleware/rbac');
 const upload = require('../middleware/multer');
@@ -10,6 +15,9 @@ const { createProductSchema } = require('../validators/productSchemas');
 
 // Public: Get all products for consumers (no auth required)
 router.get('/', getAllProducts);
+
+// Public: Get a single product by ID (no auth required)
+router.get('/:id', getProductById);
 
 // Seller: Create a new product listing (protected)
 router.post(
