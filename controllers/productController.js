@@ -28,6 +28,20 @@ const getAllProducts = async (req, res) => {
     }
 };
 
+// PUBLIC: GET /api/products/:id
+const getProductById = async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const product = await Product.findById(productId).select('-__v').lean();
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found' });
+        }
+        res.json(product);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
 // POST /api/products/create (protected)
 const createProduct = async (req, res) => {
     try {
@@ -82,4 +96,4 @@ const getMyProducts = async (req, res) => {
     }
 };
 
-module.exports = { getAllProducts, createProduct, getMyProducts };
+module.exports = { getAllProducts, createProduct, getMyProducts, getProductById };
