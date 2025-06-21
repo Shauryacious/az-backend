@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { createSeller, getSellerProfile } = require('../controllers/sellerController');
-const authRequired = require('../middleware/auth');
+const authRequired = require('../middleware/auth'); // <-- must be the multi-cookie version
 
 // Create Seller Profile (POST)
 router.post('/create', authRequired, createSeller);
