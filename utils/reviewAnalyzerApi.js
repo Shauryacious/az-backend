@@ -8,6 +8,7 @@ const axios = require('axios');
 //  * @param {number} rating - The review rating.
 //  * @returns {Promise<{pred: number, confidence: number}>}
 //  */
+
 async function analyzeReview(comment, rating) {
     try {
         const response = await axios.post('http://localhost:8002/analyze', {
