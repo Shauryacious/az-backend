@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+torch>=2.0
+torch-geometric
+numpy
+scikit-learn

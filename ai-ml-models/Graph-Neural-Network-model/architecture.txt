@@ -1,0 +1,19 @@
+
+amazon_fraud_detection/
+├── data/
+│   ├──HOPE WE FOUND       
+│   
+├── src
+│   ├── __init__.py
+│   │
+│   ├── preprocessing.py                    
+│   ├── model.py                             # RGCN class definition
+│   ├── train.py                             # training loop & label simulation
+│   ├── inference.py                         # helper to load model + data for API
+│   └── api.py                               # FastAPI server endpoints
+│
+├── frontend/
+│   └── checkSeller.js                       # Node.js snippet to call FastAPI
+│
+├── requirements.txt                         # Python dependencies
+└── README.md                                # setup & run instructions
