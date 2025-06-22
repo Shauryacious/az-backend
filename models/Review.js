@@ -1,4 +1,3 @@
-// models/Review.js
 const mongoose = require('mongoose');
 
 const reviewSchema = new mongoose.Schema(
@@ -25,6 +24,23 @@ const reviewSchema = new mongoose.Schema(
             type: String,
             trim: true,
             maxlength: 2000,
+        },
+        confidence: {
+            type: Number,  // Confidence score that review is AI-generated, 0.0 to 1.0
+            min: 0,
+            max: 1,
+            default: null,
+            index: true,
+        },
+        aiFlag: {
+            type: Boolean,  // True if review is AI-generated with high confidence
+            default: false,
+            index: true,
+        },
+        takedownFlag: {
+            type: Boolean,  // True if review is taken down due to burst AI reviews
+            default: false,
+            index: true,
         },
     },
     {

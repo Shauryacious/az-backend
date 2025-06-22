@@ -1,6 +1,7 @@
 // controllers/reviewController.js
 const Review = require('../models/Review');
 const Product = require('../models/Product');
+const reviewAnalysisQueue = require('../queues/reviewAnalysisQueue');
 
 /**
  * Add a review for a product (consumer only).
@@ -30,6 +31,14 @@ exports.addReview = async (req, res, next) => {
             { upsert: true, new: true, setDefaultsOnInsert: true }
         );
 
+        // Add review analysis job to the queue
+        await reviewAnalysisQueue.add('analyze', {
+            reviewId: review._id.toString(),
+            comment: review.comment,
+            rating: review.rating,
+            productId: review.product.toString(),
+        });
+
         res.status(201).json({ message: 'Review submitted.', review });
     } catch (err) {
         // Handle duplicate review error
@@ -47,7 +56,7 @@ exports.addReview = async (req, res, next) => {
 exports.getProductReviews = async (req, res, next) => {
     try {
         const { productId } = req.params;
-        const reviews = await Review.find({ product: productId })
+        const reviews = await Review.find({ product: productId, takedownFlag: { $ne: true } }) // Hide taken down reviews
             .populate('user', 'email')
             .sort({ createdAt: -1 })
             .lean();

@@ -5,13 +5,15 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js",
+    "start:server": "node server.js",
     "dev": "nodemon server.js",
-    "start:python": "/Users/shauryaagrawal/Desktop/az-backend/ml_service/venv/bin/uvicorn ml_service.infer_api:app --host 0.0.0.0 --port 8001",
-    "start:worker": "node workers/productAnalysisWorker.js",
-    "start:all": "concurrently \"npm run start\" \"npm run start:python\" \"npm run start:worker\""
+    "start:listing-analyzer": "/Users/shauryaagrawal/Desktop/az-backend/ml_service/venv/bin/uvicorn ml_service.infer_api:app --host 0.0.0.0 --port 8001",
+    "start:review-analyzer": "/Users/shauryaagrawal/Desktop/az-backend/ml_service/venv/bin/uvicorn ml_service.review_analyzer_api:app --host 0.0.0.0 --port 8002",
+    "start:listing-worker": "node workers/productAnalysisWorker.js",
+    "start:review-worker": "node workers/reviewAnalysisWorker.js",
+    "start:all": "concurrently \"npm run start:server\" \"npm run start:listing-analyzer\" \"npm run start:review-analyzer\" \"npm run start:listing-worker\" \"npm run start:review-worker\""
   },
-  "author": "",
+  "author": "Shaurya Bansal",
   "license": "ISC",
   "dependencies": {
     "axios": "^1.10.0",
