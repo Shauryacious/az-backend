@@ -7,6 +7,8 @@ const {
     createProduct,
     getMyProducts,
     getPendingProducts,
+    approveProduct,
+    takedownProduct,
 } = require('../controllers/productController');
 const authRequired = require('../middleware/auth');
 const rbac = require('../middleware/rbac');
@@ -18,16 +20,27 @@ const { createProductSchema } = require('../validators/productSchemas');
 router.get('/', getAllProducts);
 
 // ADMIN: Get all pending products (protected)
-// Place this BEFORE any parameterized routes!
 router.get(
     '/pending',
     authRequired,
     rbac(['admin']),
-    (req, res, next) => {
-        console.log('Pending products route hit');
-        next();
-    },
     getPendingProducts
+);
+
+// ADMIN: Approve a pending product
+router.patch(
+    '/:id/approve',
+    authRequired,
+    rbac(['admin']),
+    approveProduct
+);
+
+// ADMIN: Takedown a product
+router.patch(
+    '/:id/takedown',
+    authRequired,
+    rbac(['admin']),
+    takedownProduct
 );
 
 // SELLER: Get all products for the logged-in seller (protected)

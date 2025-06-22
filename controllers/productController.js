@@ -1,4 +1,3 @@
-// controllers/productController.js
 const Product = require('../models/Product');
 const Seller = require('../models/Seller');
 const { uploadBuffer } = require('../utils/cloudinary');
@@ -10,11 +9,10 @@ const productAnalysisQueue = require('../queues/productAnalysisQueue');
  */
 const getAllProducts = async (req, res, next) => {
     try {
-        const limit = Math.min(parseInt(req.query.limit, 10) || 100, 100); // Max 100
+        const limit = Math.min(parseInt(req.query.limit, 10) || 100, 100);
         const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
         const skip = (page - 1) * limit;
 
-        // Optionally, add filters here (category, price range, search, etc.)
         const products = await Product.find()
             .select('-__v')
             .limit(limit)
@@ -59,13 +57,11 @@ const getProductById = async (req, res, next) => {
  */
 const getPendingProducts = async (req, res, next) => {
     try {
-        const limit = Math.min(parseInt(req.query.limit, 10) || 100, 100); // Max 100
+        const limit = Math.min(parseInt(req.query.limit, 10) || 100, 100);
         const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
         const skip = (page - 1) * limit;
 
         const query = { status: 'pending' };
-        console.log('[DEBUG] getPendingProducts called. Query:', query);
-
         const products = await Product.find(query)
             .populate('seller', 'businessName')
             .select('-__v')
@@ -85,11 +81,63 @@ const getPendingProducts = async (req, res, next) => {
             },
         });
     } catch (err) {
-        console.error('[ERROR] getPendingProducts:', err);
         next(err);
     }
 };
 
+/**
+ * ADMIN: Approve a pending product (set status to 'active')
+ * PATCH /api/products/:id/approve
+ */
+const approveProduct = async (req, res, next) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        if (!product) return res.status(404).json({ error: "Product not found" });
+
+        if (product.status !== "pending")
+            return res.status(400).json({ error: "Only pending products can be approved" });
+
+        product.status = "active";
+        product.statusHistory.push({
+            status: "active",
+            changedAt: new Date(),
+            reason: "Approved by admin",
+            flags: product.flags,
+        });
+        await product.save();
+
+        res.json({ message: "Product approved", product });
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
+ * ADMIN: Takedown a product (set status to 'takedown')
+ * PATCH /api/products/:id/takedown
+ */
+const takedownProduct = async (req, res, next) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        if (!product) return res.status(404).json({ error: "Product not found" });
+
+        if (product.status === "takedown")
+            return res.status(400).json({ error: "Product already taken down" });
+
+        product.status = "takedown";
+        product.statusHistory.push({
+            status: "takedown",
+            changedAt: new Date(),
+            reason: req.body.reason || "Takedown by admin",
+            flags: product.flags,
+        });
+        await product.save();
+
+        res.json({ message: "Product taken down", product });
+    } catch (err) {
+        next(err);
+    }
+};
 
 /**
  * PROTECTED: Create a new product listing.
@@ -161,65 +209,12 @@ const getMyProducts = async (req, res, next) => {
     }
 };
 
-// Optionally keep this for admin/debug only (not exported, not routed)
-const analyzeProductImage = async (req, res, next) => {
-    try {
-        const { description } = req.body;
-        const imagePath = req.file.path; // multer handles file upload
-        const productId = req.params.id;
-        const { matchImageWithDescription } = require('../utils/blipApi');
-
-        // Call Python BLIP microservice
-        const result = await matchImageWithDescription(imagePath, description);
-
-        // Update product in DB
-        const product = await Product.findById(productId);
-        if (!product) {
-            return res.status(404).json({ error: 'Product not found' });
-        }
-
-        // Update signalBreakdown and flags
-        product.signalBreakdown = product.signalBreakdown || {};
-        product.signalBreakdown.descMatch = result.score;
-
-        product.flags = product.flags || [];
-        if (result.label === 'Fake') {
-            if (!product.flags.includes('desc_image_mismatch')) {
-                product.flags.push('desc_image_mismatch');
-            }
-        } else {
-            product.flags = product.flags.filter(f => f !== 'desc_image_mismatch');
-        }
-
-        // Update trustScore, riskLevel, status using model methods (if implemented)
-        if (typeof product.computeRiskLevel === 'function') {
-            product.trustScore = result.score;
-            product.riskLevel = product.computeRiskLevel();
-            product.status = product.computeStatus();
-        }
-
-        // Log status history
-        product.statusHistory = product.statusHistory || [];
-        product.statusHistory.push({
-            status: product.status,
-            changedAt: new Date(),
-            reason: 'Image-description AI analysis',
-            flags: product.flags,
-        });
-
-        await product.save();
-
-        res.json({ success: true, label: result.label, score: result.score });
-    } catch (err) {
-        next(err);
-    }
-};
-
 module.exports = {
     getAllProducts,
     getProductById,
     createProduct,
     getMyProducts,
     getPendingProducts,
-    // analyzeProductImage, // <-- NOT EXPORTED (admin only)
+    approveProduct,
+    takedownProduct,
 };

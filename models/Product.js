@@ -3,12 +3,11 @@
 const mongoose = require('mongoose');
 
 /**
- * Product Schema (2025 Standard Practice)
+ * Product Schema 
  * - Unified trust, risk, and flag system for LLM-driven marketplace trust
  * - Tracks detailed AI/ML signal breakdown, flags, and status history
  * - Extensible for new signals, fully auditable, and explainable
  */
-
 const productSchema = new mongoose.Schema(
     {
         seller: {
@@ -17,81 +16,21 @@ const productSchema = new mongoose.Schema(
             required: true,
             index: true,
         },
-        name: {
-            type: String,
-            required: true,
-            trim: true,
-            minlength: 1,
-        },
-        sku: {
-            type: String,
-            required: true,
-            trim: true,
-            unique: true,
-            index: true,
-        },
-        description: {
-            type: String,
-            required: true,
-            trim: true,
-        },
-        images: [
-            {
-                type: String,
-                trim: true,
-            },
-        ],
-        brand: {
-            type: String,
-            trim: true,
-        },
-        logoImage: {
-            type: String,
-            trim: true,
-        },
-        logoFeatures: {
-            type: mongoose.Schema.Types.Mixed,
-        },
-        barcode: {
-            type: String,
-            trim: true,
-        },
-        qrCode: {
-            type: String,
-            trim: true,
-        },
-        barcodeImage: {
-            type: String,
-            trim: true,
-        },
-        qrCodeImage: {
-            type: String,
-            trim: true,
-        },
-        packagingImages: [
-            {
-                type: String,
-                trim: true,
-            },
-        ],
-        labelText: {
-            type: String,
-            trim: true,
-        },
-        price: {
-            type: Number,
-            required: true,
-            min: 0.01,
-        },
-        stock: {
-            type: Number,
-            required: true,
-            min: 0,
-        },
-        category: {
-            type: String,
-            trim: true,
-        },
+        name: { type: String, required: true, trim: true, minlength: 1 },
+        sku: { type: String, required: true, trim: true, unique: true, index: true },
+        description: { type: String, required: true, trim: true },
+        images: [{ type: String, trim: true }],
+        brand: { type: String, trim: true },
+        logoImage: { type: String, trim: true },
+        logoFeatures: { type: mongoose.Schema.Types.Mixed },
+        barcode: { type: String, trim: true },
+        qrCode: { type: String, trim: true },
+        barcodeImage: { type: String, trim: true },
+        qrCodeImage: { type: String, trim: true },
+        packagingImages: [{ type: String, trim: true }],
+        labelText: { type: String, trim: true },
+        price: { type: Number, required: true, min: 0.01 },
+        stock: { type: Number, required: true, min: 0 }, category: { type: String, trim: true },
         variants: [
             {
                 size: { type: String, trim: true },
@@ -150,12 +89,8 @@ const productSchema = new mongoose.Schema(
         ],
 
         // --- AI/ML Meta and Provenance ---
-        aiAnalysisMeta: {
-            type: mongoose.Schema.Types.Mixed,
-        },
-        provenance: {
-            type: mongoose.Schema.Types.Mixed,
-        },
+        aiAnalysisMeta: { type: mongoose.Schema.Types.Mixed },
+        provenance: { type: mongoose.Schema.Types.Mixed },
     },
     {
         timestamps: true,
@@ -174,7 +109,7 @@ productSchema.index({
 productSchema.index({ price: 1 });
 
 /**
- * Utility: Compute risk level based on trustScore and critical flags
+ * Compute risk level based on trustScore and critical flags
  */
 productSchema.methods.computeRiskLevel = function () {
     const criticalFlags = [
@@ -187,13 +122,22 @@ productSchema.methods.computeRiskLevel = function () {
     if (this.flags && this.flags.some(flag => criticalFlags.includes(flag))) {
         return 'red';
     }
-    if (this.trustScore >= 0.8) return 'green';
-    if (this.trustScore >= 0.01) return 'yellow';
+    if (typeof this.trustScore === 'number' && this.trustScore >= 0.8) return 'green';
+    if (typeof this.trustScore === 'number' && this.trustScore >= 0.000001) return 'yellow';
     return 'red';
 };
 
 /**
- * Utility: Compute product status from riskLevel
+ * Set trustScore (0-1), clamp and ensure proper risk/status update.
+ * Optionally pass a reason for statusHistory.
+ */
+productSchema.methods.setTrustScore = function (score, reason = "AI/ML update") {
+    this.trustScore = Math.max(0, Math.min(1, score));
+    this.updateTrustAndStatus(reason);
+};
+
+/**
+ * Compute product status from riskLevel
  */
 productSchema.methods.computeStatus = function () {
     if (this.riskLevel === 'green') return 'active';
@@ -202,10 +146,10 @@ productSchema.methods.computeStatus = function () {
 };
 
 /**
- * Utility: Update status and riskLevel after AI/ML analysis
+ * Update status and riskLevel after AI/ML analysis
  * (Call this after updating trustScore, flags, or signalBreakdown)
  */
-productSchema.methods.updateTrustAndStatus = function () {
+productSchema.methods.updateTrustAndStatus = function (reason = 'Automated trust/risk update') {
     this.riskLevel = this.computeRiskLevel();
     const newStatus = this.computeStatus();
     if (this.status !== newStatus) {
@@ -213,7 +157,7 @@ productSchema.methods.updateTrustAndStatus = function () {
         this.statusHistory.push({
             status: newStatus,
             changedAt: new Date(),
-            reason: 'Automated trust/risk update',
+            reason,
             flags: this.flags,
         });
     }
