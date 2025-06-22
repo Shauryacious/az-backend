@@ -101,7 +101,7 @@ const productSchema = new mongoose.Schema(
             },
         ],
 
-        // --- Trust, Risk, and Flags (Best Practice) ---
+        // --- Trust, Risk, and Flags ---
         status: {
             type: String,
             enum: ['active', 'pending', 'takedown'],
@@ -188,7 +188,7 @@ productSchema.methods.computeRiskLevel = function () {
         return 'red';
     }
     if (this.trustScore >= 0.8) return 'green';
-    if (this.trustScore >= 0.5) return 'yellow';
+    if (this.trustScore >= 0.01) return 'yellow';
     return 'red';
 };
 

@@ -54,6 +54,44 @@ const getProductById = async (req, res, next) => {
 };
 
 /**
+ * ADMIN: List all products pending human review (status: 'pending')
+ * GET /api/products/pending
+ */
+const getPendingProducts = async (req, res, next) => {
+    try {
+        const limit = Math.min(parseInt(req.query.limit, 10) || 100, 100); // Max 100
+        const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+        const skip = (page - 1) * limit;
+
+        const query = { status: 'pending' };
+        console.log('[DEBUG] getPendingProducts called. Query:', query);
+
+        const products = await Product.find(query)
+            .populate('seller', 'businessName')
+            .select('-__v')
+            .limit(limit)
+            .skip(skip)
+            .sort({ updatedAt: -1 })
+            .lean();
+
+        const total = await Product.countDocuments(query);
+
+        res.json({
+            products,
+            pagination: {
+                total,
+                page,
+                pages: Math.ceil(total / limit),
+            },
+        });
+    } catch (err) {
+        console.error('[ERROR] getPendingProducts:', err);
+        next(err);
+    }
+};
+
+
+/**
  * PROTECTED: Create a new product listing.
  * POST /api/products/create
  */
@@ -182,5 +220,6 @@ module.exports = {
     getProductById,
     createProduct,
     getMyProducts,
-    // analyzeProductImage, // <-- NOT EXPORTED (admin/debug only)
+    getPendingProducts,
+    // analyzeProductImage, // <-- NOT EXPORTED (admin only)
 };

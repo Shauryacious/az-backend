@@ -1,3 +1,4 @@
+// routes/productRoutes.js
 const express = require('express');
 const router = express.Router();
 const {
@@ -5,6 +6,7 @@ const {
     getProductById,
     createProduct,
     getMyProducts,
+    getPendingProducts,
 } = require('../controllers/productController');
 const authRequired = require('../middleware/auth');
 const rbac = require('../middleware/rbac');
@@ -14,6 +16,19 @@ const { createProductSchema } = require('../validators/productSchemas');
 
 // PUBLIC: Get all products
 router.get('/', getAllProducts);
+
+// ADMIN: Get all pending products (protected)
+// Place this BEFORE any parameterized routes!
+router.get(
+    '/pending',
+    authRequired,
+    rbac(['admin']),
+    (req, res, next) => {
+        console.log('Pending products route hit');
+        next();
+    },
+    getPendingProducts
+);
 
 // SELLER: Get all products for the logged-in seller (protected)
 router.get(
@@ -33,7 +48,7 @@ router.post(
     createProduct
 );
 
-// PUBLIC: Get a single product by ID
+// PUBLIC: Get a single product by ID (no auth required)
 router.get('/:id', getProductById);
 
 module.exports = router;
