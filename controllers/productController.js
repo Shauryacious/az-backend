@@ -6,6 +6,7 @@ const productAnalysisQueue = require('../queues/productAnalysisQueue');
 /**
  * PUBLIC: Get all products with optional pagination.
  * GET /api/products
+ * Only returns products that are NOT pending or taken down.
  */
 const getAllProducts = async (req, res, next) => {
     try {
@@ -13,13 +14,16 @@ const getAllProducts = async (req, res, next) => {
         const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
         const skip = (page - 1) * limit;
 
-        const products = await Product.find()
+        // Exclude products with status 'pending' or 'takedown'
+        const query = { status: { $nin: ['pending', 'takedown'] } };
+
+        const products = await Product.find(query)
             .select('-__v')
             .limit(limit)
             .skip(skip)
             .lean();
 
-        const total = await Product.countDocuments();
+        const total = await Product.countDocuments(query);
 
         res.json({
             products,
@@ -33,6 +37,7 @@ const getAllProducts = async (req, res, next) => {
         next(err);
     }
 };
+
 
 /**
  * PUBLIC: Get a single product by ID.

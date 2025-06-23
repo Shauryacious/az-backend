@@ -88,9 +88,18 @@ const worker = new Worker('review-analysis', async job => {
                     { takedownFlag: true }
                 );
 
-                // Update product flags
+                // Update product flags and mark as pending with reason
                 await Product.findByIdAndUpdate(productId, {
-                    $addToSet: { flags: 'ai_review_burst' }
+                    $addToSet: { flags: 'ai_review_burst' },
+                    status: 'pending',
+                    $push: {
+                        statusHistory: {
+                            status: 'pending',
+                            changedAt: new Date(),
+                            reason: 'Burst review detected by AI',
+                            flags: ['ai_review_burst'],
+                        },
+                    },
                 });
 
                 // Log burst detection event
@@ -119,3 +128,5 @@ worker.on('completed', job => {
 worker.on('failed', (job, err) => {
     console.error(`Review job ${job.id} failed:`, err);
 });
+
+module.exports = worker;
