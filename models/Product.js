@@ -142,7 +142,7 @@ productSchema.methods.setTrustScore = function (score, reason = "AI/ML update") 
 productSchema.methods.computeStatus = function () {
     if (this.riskLevel === 'green') return 'active';
     if (this.riskLevel === 'yellow') return 'pending';
-    return 'takedown';
+    return 'pending';
 };
 
 /**
@@ -151,7 +151,13 @@ productSchema.methods.computeStatus = function () {
  */
 productSchema.methods.updateTrustAndStatus = function (reason = 'Automated trust/risk update') {
     this.riskLevel = this.computeRiskLevel();
-    const newStatus = this.computeStatus();
+    let newStatus = this.computeStatus();
+
+    // Prevent AI/ML from setting takedown automatically
+    if (newStatus === 'takedown') {
+        newStatus = 'pending';
+    }
+
     if (this.status !== newStatus) {
         this.status = newStatus;
         this.statusHistory.push({
@@ -162,6 +168,7 @@ productSchema.methods.updateTrustAndStatus = function (reason = 'Automated trust
         });
     }
 };
+
 
 const Product = mongoose.model('Product', productSchema);
 
