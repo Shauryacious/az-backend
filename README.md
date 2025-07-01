@@ -1,10 +1,14 @@
+Here’s the updated **"Beacon Backend"** README with the frontend GitHub links added:
+
+---
+
 # Beacon Backend
 
 A scalable Node.js/Express backend powering three frontends:
 
-- **Amazon Consumer**
-- **Amazon Seller**
-- **Beacon Admin Dashboard**
+* **Amazon Consumer** — [GitHub](https://github.com/Shauryacious/amazon-frontend)
+* **Amazon Seller** — [GitHub](https://github.com/Shauryacious/az-frontend)
+* **Beacon Admin Dashboard** — [GitHub](https://github.com/Shauryacious/beacon-frontend)
 
 This backend is modular, secure, and production-ready, with robust authentication, RBAC, file upload, validation, and seamless integration with multiple AI/ML microservices for trust, risk, and authenticity analysis.
 
