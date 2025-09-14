@@ -1,7 +1,3 @@
-Here’s the updated **"Beacon Backend"** README with the frontend GitHub links added:
-
----
-
 # Beacon Backend
 
 A scalable Node.js/Express backend powering three frontends:
